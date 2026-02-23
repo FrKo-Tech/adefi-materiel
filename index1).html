@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>ADEFI Matériel - Gestion d'inventaire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #eef2ff;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(99,102,241,0.12);
+            --shadow-lg: 0 20px 40px rgba(99,102,241,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-card);
+            border-right: 2px solid var(--border);
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo {
+            font-size: 1.2em;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+        }
+        
+        .logo img {
+            width: 50px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+        }
+
+        .nav-item {
+            padding: 14px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        }
+
+        .nav-item-icon {
+            font-size: 1.3em;
+            width: 24px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 32px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 48px;
+            border-radius: 24px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            top: -100px;
+            right: -100px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            font-weight: 800;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95em;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.3s ease;
+            background: var(--bg-card);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-main);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .signature-pad {
+            border: 3px solid var(--primary);
+            border-radius: 12px;
+            background: white;
+            cursor: crosshair;
+            touch-action: none;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            max-width: 600px;
+            height: 150px;
+        }
+
+        .signature-pad:hover {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .material-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .material-item {
+            background: var(--bg-main);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .material-item:hover {
+            box-shadow: var(--shadow);
+            transform: translateX(4px);
+        }
+
+        .material-item.disponible {
+            border-left-color: var(--secondary);
+        }
+
+        .material-item.emprunte {
+            border-left-color: var(--warning);
+            background: #fffbf0;
+        }
+
+        .material-item.late {
+            border-left-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .material-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            background: white;
+            border: 2px solid var(--border);
+        }
+
+        .material-info {
+            flex: 1;
+        }
+
+        .material-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .material-details {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .material-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .tag-disponible {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .tag-emprunte {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .tag-retard {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .reservation-item {
+            background: var(--bg-main);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .reservation-item:hover {
+            box-shadow: var(--shadow);
+            transform: translateX(4px);
+        }
+
+        .reservation-item.late {
+            border-left-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .reservation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .reservation-title {
+            font-weight: 700;
+            font-size: 1.2em;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .reservation-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid var(--warning);
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            font-size: 1.8em;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .search-box input {
+            padding-left: 44px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.2em;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--bg-main);
+            border: 2px solid var(--border);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .chip:hover, .chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 968px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 2px solid var(--border);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+
+            .app-container {
+                flex-direction: column;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* === SYSTÈME DE MOT DE PASSE === */
+        .lock-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lock-overlay.hidden {
+            display: none;
+        }
+
+        .lock-box {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            animation: slideUp 0.4s ease;
+        }
+
+        .lock-icon {
+            font-size: 3em;
+            margin-bottom: 16px;
+        }
+
+        .lock-title {
+            font-size: 1.5em;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .lock-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            margin-bottom: 28px;
+        }
+
+        .lock-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            text-align: center;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .lock-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .lock-input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 4px #fee2e2;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        .lock-error {
+            color: var(--danger);
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            min-height: 20px;
+        }
+
+        .lock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-badge:hover {
+            background: #a7f3d0;
+        }
+
+        .form-locked {
+            position: relative;
+        }
+
+        .form-locked-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(248, 250, 252, 0.85);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            backdrop-filter: blur(2px);
+        }
+
+        .form-locked-msg {
+            text-align: center;
+            padding: 32px;
+        }
+
+        .form-locked-msg .lock-icon {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+
+        .form-locked-msg p {
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="https://static.wixstatic.com/media/7599cc_5aeff45882cb489bb085231b790ac486~mv2.png/v1/fill/w_247,h_236,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/ADEFI%20PNG%20NOIR.png" 
+                     alt="Logo ADEFI">
+                <span>ADEFI Matériel</span>
+            </div>
+            <div id="adminStatusBar" style="margin-bottom: 16px; padding: 0 10px; display:none;">
+                <span class="admin-badge" onclick="logout()" title="Cliquer pour se déconnecter">🔓 Admin <span style="opacity:0.6; font-size:0.85em;">· Déconnexion</span></span>
+            </div>
+            
+            <nav>
+                <div class="nav-item active" onclick="switchView('dashboard')">
+                    <span class="nav-item-icon">📊</span>
+                    <span>Tableau de bord</span>
+                </div>
+                <div class="nav-item" onclick="switchView('materials')">
+                    <span class="nav-item-icon">📦</span>
+                    <span>Inventaire</span>
+                </div>
+                <div class="nav-item" onclick="switchView('reservations')">
+                    <span class="nav-item-icon">📋</span>
+                    <span>Réservations</span>
+                </div>
+                <div class="nav-item" onclick="switchView('history')">
+                    <span class="nav-item-icon">🕐</span>
+                    <span>Historique</span>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard" class="view active">
+                <div class="header">
+                    <h1>Tableau de bord</h1>
+                    <p>Vue d'ensemble de votre matériel éducatif</p>
+                </div>
+
+                <div id="alerts"></div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Matériel</div>
+                        <div class="stat-value" id="totalMaterials">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Disponible</div>
+                        <div class="stat-value" id="availableMaterials">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Emprunté</div>
+                        <div class="stat-value" id="borrowedMaterials">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">En retard</div>
+                        <div class="stat-value" id="lateMaterials">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Matériel emprunté</h2>
+                    </div>
+                    <div id="dashboardBorrowedList"></div>
+                </div>
+            </div>
+
+            <!-- Materials View -->
+            <div id="materials" class="view">
+                <div class="header">
+                    <h1>Inventaire du matériel</h1>
+                    <p>Gérez votre catalogue de matériel éducatif</p>
+                </div>
+
+                <div class="card form-locked" id="addMaterialCard">
+                    <div id="formLockOverlay" class="form-locked-overlay">
+                        <div class="form-locked-msg">
+                            <div class="lock-icon">🔒</div>
+                            <p>Accès restreint aux administrateurs</p>
+                            <button class="btn btn-primary" onclick="openPasswordModal()">
+                                🔑 Se connecter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h2 class="card-title">Ajouter du matériel</h2>
+                    </div>
+                    <form id="materialForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="matName">Nom du matériel *</label>
+                                <input type="text" id="matName" required placeholder="Ex: Ordinateur portable HP">
+                            </div>
+                            <div class="form-group">
+                                <label for="matCategory">Catégorie *</label>
+                                <select id="matCategory" required>
+                                    <option value="">Sélectionner...</option>
+                                    <optgroup label="💻 Ordinateurs">
+                                        <option value="ordinateur-apprenant">💻 Ordinateur Apprenant</option>
+                                        <option value="ordinateur-hdf">💻 Ordinateur HDF</option>
+                                        <option value="ordinateur-mobilisation">💻 PC Mobilisation</option>
+                                    </optgroup>
+                                    <optgroup label="📱 Tablettes & Mobiles">
+                                        <option value="tablette">📱 Tablette</option>
+                                    </optgroup>
+                                    <optgroup label="🥽 Réalité Virtuelle">
+                                        <option value="casque-vr-metier">🥽 Casque VR Métier 360</option>
+                                        <option value="casque-vr-mobilite">🥽 Casque VR Mobilité</option>
+                                    </optgroup>
+                                    <optgroup label="🎮 Simulateurs">
+                                        <option value="simulateur-soudure">🔥 Simulateur de soudure</option>
+                                        <option value="simulateur-conduite">🚗 Simulateur de conduite</option>
+                                    </optgroup>
+                                    <optgroup label="🖨️ Imprimantes & Équipement">
+                                        <option value="imprimante-3d">🖨️ Imprimante 3D</option>
+                                        <option value="imprimante-sublimation">🖨️ Imprimante sublimation</option>
+                                        <option value="machine-presse">⚙️ Machine à presse</option>
+                                        <option value="appareil-casquette">🧢 Appareil à casquette</option>
+                                    </optgroup>
+                                    <optgroup label="🎥 Studio & Multimédia">
+                                        <option value="studio-photo-video">📹 Studio photo/vidéo</option>
+                                        <option value="studio-radio">🎙️ Studio radio</option>
+                                    </optgroup>
+                                    <optgroup label="🎲 Autres">
+                                        <option value="jeu-educatif">🎲 Jeu éducatif</option>
+                                        <option value="autre">📦 Autre</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="matSite">Site attribué *</label>
+                                <input type="text" id="matSite" required placeholder="Ex: Site A, Bâtiment 3, Salle 201">
+                            </div>
+                            <div class="form-group">
+                                <label for="matReference">Référence</label>
+                                <input type="text" id="matReference" placeholder="Ex: MAT-001">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="matDescription">Description</label>
+                                <textarea id="matDescription" rows="2" placeholder="Description du matériel..."></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span>➕</span>
+                            <span>Ajouter au catalogue</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Catalogue</h2>
+                    </div>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchMaterial" placeholder="Rechercher du matériel...">
+                    </div>
+                    <div class="filter-chips">
+                        <div class="chip active" data-filter="all">📦 Tout</div>
+                        <div class="chip" data-filter="ordinateur-hdf">💻 PC HDF</div>
+                        <div class="chip" data-filter="ordinateur-mobilisation">💻 PC Mobilisation</div>
+                        <div class="chip" data-filter="tablette">📱 Tablettes</div>
+                        <div class="chip" data-filter="casque-vr-metier">🥽 VR Métier</div>
+                        <div class="chip" data-filter="casque-vr-mobilite">🥽 VR Mobilité</div>
+                        <div class="chip" data-filter="simulateur-conduite">🚗 Simulateurs</div>
+                        <div class="chip" data-filter="imprimante-3d">🖨️ Imprimantes</div>
+                        <div class="chip" data-filter="studio-photo-video">📹 Studios</div>
+                        <div class="chip" data-filter="disponible">✅ Disponibles</div>
+                        <div class="chip" data-filter="emprunte">📤 Empruntés</div>
+                    </div>
+                    <div id="materialsList" class="material-grid"></div>
+                </div>
+            </div>
+
+            <!-- Reservations View -->
+            <div id="reservations" class="view">
+                <div class="header">
+                    <h1>Nouvelle réservation</h1>
+                    <p>Enregistrer un emprunt de matériel</p>
+                </div>
+
+                <div class="card">
+                    <form id="reservationForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="borrowerName">Nom de l'emprunteur *</label>
+                                <input type="text" id="borrowerName" required placeholder="Jean Dupont">
+                            </div>
+                            <div class="form-group">
+                                <label for="borrowerContact">Email de l'emprunteur *</label>
+                                <input type="email" id="borrowerContact" required placeholder="prenom.nom@exemple.fr">
+                            </div>
+                            <div class="form-group">
+                                <label for="selectedMaterial">Matériel à emprunter *</label>
+                                <select id="selectedMaterial" required>
+                                    <option value="">Sélectionner un matériel...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Site actuel</label>
+                                <input type="text" id="currentSite" readonly disabled>
+                            </div>
+                            <div class="form-group">
+                                <label for="borrowDate">Date d'emprunt *</label>
+                                <input type="date" id="borrowDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="returnDate">Date de retour prévue *</label>
+                                <input type="date" id="returnDate" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="borrowNotes">Notes (optionnel)</label>
+                                <textarea id="borrowNotes" rows="2" placeholder="Informations supplémentaires..."></textarea>
+                            </div>
+                            <div class="form-group full-width">
+                                <label style="font-size: 1.1em; color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    ✍️ Signature de l'emprunteur *
+                                </label>
+                                <div style="background: var(--primary-light); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--primary);">
+                                    <p style="font-size: 0.9em; color: var(--text-primary); margin: 0;">
+                                        💡 <strong>Comment signer :</strong> Dessinez votre signature dans le cadre ci-dessous avec votre souris ou votre doigt (sur écran tactile)
+                                    </p>
+                                </div>
+                                <canvas id="signaturePad" class="signature-pad"></canvas>
+                                <div style="margin-top: 10px;">
+                                    <button type="button" class="btn btn-secondary btn-small" onclick="clearSignature()">🗑️ Effacer la signature</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">
+                            <span>✅</span>
+                            <span>Enregistrer l'emprunt</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Emprunts en cours</h2>
+                    </div>
+                    <div id="activeReservationsList"></div>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div id="history" class="view">
+                <div class="header">
+                    <h1>Historique complet</h1>
+                    <p>Tous les emprunts passés</p>
+                </div>
+
+                <div class="card">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchHistory" placeholder="Rechercher dans l'historique...">
+                    </div>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal mot de passe admin -->
+    <div id="passwordModal" class="lock-overlay hidden">
+        <div class="lock-box">
+            <div class="lock-icon">🔐</div>
+            <div class="lock-title">Accès administrateur</div>
+            <div class="lock-subtitle">Entrez le mot de passe pour ajouter ou supprimer du matériel</div>
+            <div class="lock-badge">🛡️ Zone protégée</div>
+            <input 
+                type="password" 
+                id="passwordInput" 
+                class="lock-input" 
+                placeholder="Mot de passe"
+                onkeydown="if(event.key==='Enter') checkPassword()"
+                autocomplete="off"
+            >
+            <div id="passwordError" class="lock-error"></div>
+            <button class="btn btn-primary" onclick="checkPassword()" style="width:100%; margin-bottom: 12px;">
+                🔓 Déverrouiller
+            </button>
+            <button class="btn btn-secondary" onclick="closePasswordModal()" style="width:100%;">
+                Annuler
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal pour voir la signature -->
+    <div id="signatureModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Signature</div>
+            <div id="signatureModalContent"></div>
+            <button class="btn btn-primary" onclick="closeModal()" style="width: 100%; margin-top: 20px;">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // CONFIGURATION SUPABASE
+        // =============================================
+        const SUPABASE_URL = 'https://brisbpyklxsxyfodoode.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyaXNpYnB5a2x4c3h5ZmRvb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NTU3MzcsImV4cCI6MjA4NzQzMTczN30.I1qS8p5et4YGVSaMhepF6tIXy1eAGqmqgno0h5GyZKs';
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        };
+
+        async function sbGet(table) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?order=id.asc`, { headers });
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        async function sbInsert(table, data) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+                method: 'POST',
+                headers: { ...headers, 'Prefer': 'return=representation' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        async function sbUpdate(table, id, data) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: { ...headers, 'Prefer': 'return=representation' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+
+        async function sbDelete(table, id) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+                method: 'DELETE',
+                headers
+            });
+            if (!res.ok) throw new Error(await res.text());
+        }
+
+        // Chargement initial des données
+        async function loadData() {
+            showLoading(true);
+            try {
+                const [mats, ress] = await Promise.all([sbGet('materials'), sbGet('reservations')]);
+                materials = mats;
+                reservations = ress;
+                renderDashboard();
+                renderMaterials();
+                updateStats();
+                checkAlerts();
+            } catch(e) {
+                alert('❌ Erreur de connexion à la base de données : ' + e.message);
+            }
+            showLoading(false);
+        }
+
+        function showLoading(show) {
+            let loader = document.getElementById('globalLoader');
+            if (!loader) {
+                loader = document.createElement('div');
+                loader.id = 'globalLoader';
+                loader.style.cssText = 'position:fixed;top:16px;right:16px;background:var(--primary);color:white;padding:10px 20px;border-radius:12px;z-index:9999;font-weight:700;box-shadow:var(--shadow-md);';
+                loader.textContent = '⏳ Chargement...';
+                document.body.appendChild(loader);
+            }
+            loader.style.display = show ? 'block' : 'none';
+        }
+
+        // =============================================
+        // SYSTÈME D'AUTHENTIFICATION ADMINISTRATEUR
+        // =============================================
+        // Mot de passe par défaut : changez-le ici !
+        const ADMIN_PASSWORD = 'Adefi2024!';
+        
+        let isAdmin = false;
+
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordError').textContent = '';
+            setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordError').textContent = '';
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput').value;
+            const inputEl = document.getElementById('passwordInput');
+            const errorEl = document.getElementById('passwordError');
+
+            if (input === ADMIN_PASSWORD) {
+                isAdmin = true;
+                closePasswordModal();
+                updateAdminUI();
+            } else {
+                errorEl.textContent = '❌ Mot de passe incorrect';
+                inputEl.classList.add('error');
+                inputEl.value = '';
+                setTimeout(() => {
+                    inputEl.classList.remove('error');
+                    errorEl.textContent = '';
+                }, 2000);
+            }
+        }
+
+        function logout() {
+            if (confirm('Se déconnecter du mode administrateur ?')) {
+                isAdmin = false;
+                updateAdminUI();
+            }
+        }
+
+        function updateAdminUI() {
+            const overlay = document.getElementById('formLockOverlay');
+            const statusBar = document.getElementById('adminStatusBar');
+
+            if (isAdmin) {
+                overlay.style.display = 'none';
+                statusBar.style.display = 'block';
+            } else {
+                overlay.style.display = 'flex';
+                statusBar.style.display = 'none';
+            }
+        }
+        // =============================================
+
+        // Données chargées depuis Supabase
+        let materials = [];
+        let reservations = [];
+
+
+        // Configuration signature
+        const canvas = document.getElementById('signaturePad');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let hasSignature = false;
+
+        // Définir les dimensions du canvas
+        const canvasWidth = 600;
+        const canvasHeight = 150;
+        const dpr = window.devicePixelRatio || 1;
+        
+        canvas.width = canvasWidth * dpr;
+        canvas.height = canvasHeight * dpr;
+        canvas.style.width = canvasWidth + 'px';
+        canvas.style.height = canvasHeight + 'px';
+        ctx.scale(dpr, dpr);
+
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            return { x, y };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            hasSignature = true;
+            const { x, y } = getCoordinates(e);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const { x, y } = getCoordinates(e);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasSignature = false;
+        }
+
+        // Navigation
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(viewName).classList.add('active');
+            
+            // Activer le bon élément de navigation (si appelé depuis un clic)
+            if (typeof event !== 'undefined' && event && event.target) {
+                event.target.closest('.nav-item').classList.add('active');
+            } else {
+                // Si appelé programmatiquement, trouver et activer le bon nav-item
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    if (item.onclick && item.onclick.toString().includes(viewName)) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+
+            if (viewName === 'materials') renderMaterials();
+            if (viewName === 'reservations') {
+                renderMaterialSelect();
+                renderActiveReservations();
+            }
+            if (viewName === 'history') renderHistory();
+            if (viewName === 'dashboard') renderDashboard();
+        }
+        
+        // Fonction pour recharger l'inventaire
+
+        // Gestion du matériel
+        document.getElementById('materialForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!isAdmin) {
+                openPasswordModal();
+                return;
+            }
+
+            const material = {
+                id: Date.now(),
+                name: document.getElementById('matName').value,
+                category: document.getElementById('matCategory').value,
+                site: document.getElementById('matSite').value,
+                reference: document.getElementById('matReference').value || 'N/A',
+                description: document.getElementById('matDescription').value,
+                status: 'disponible'
+            };
+
+            try {
+                showLoading(true);
+                await sbInsert('materials', material);
+                materials.push(material);
+                this.reset();
+                renderMaterials();
+                updateStats();
+            } catch(e) {
+                alert('❌ Erreur lors de l\'ajout : ' + e.message);
+            }
+            showLoading(false);
+        });
+
+        function saveMaterials() { /* géré par Supabase */ }
+        function saveReservations() { /* géré par Supabase */ }
+
+        function renderMaterials(filter = 'all', search = '') {
+            const container = document.getElementById('materialsList');
+            let filtered = materials;
+
+            if (filter !== 'all') {
+                if (filter === 'disponible' || filter === 'emprunte') {
+                    filtered = materials.filter(m => m.status === filter);
+                } else {
+                    filtered = materials.filter(m => m.category === filter);
+                }
+            }
+
+            if (search) {
+                filtered = filtered.filter(m => 
+                    m.name.toLowerCase().includes(search.toLowerCase()) ||
+                    m.site.toLowerCase().includes(search.toLowerCase()) ||
+                    m.reference.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><p>Aucun matériel trouvé</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(material => {
+                const categoryIcons = {
+                    // Ordinateurs
+                    'ordinateur-apprenant': '💻',
+                    'ordinateur-hdf': '💻',
+                    'ordinateur-mobilisation': '💻',
+                    'ordinateur': '💻',
+                    // Tablettes
+                    'tablette': '📱',
+                    // VR
+                    'casque-vr-metier': '🥽',
+                    'casque-vr-mobilite': '🥽',
+                    // Simulateurs
+                    'simulateur-soudure': '🔥',
+                    'simulateur-conduite': '🚗',
+                    // Imprimantes
+                    'imprimante-3d': '🖨️',
+                    'imprimante-sublimation': '🖨️',
+                    'machine-presse': '⚙️',
+                    'appareil-casquette': '🧢',
+                    // Studio
+                    'studio-photo-video': '📹',
+                    'studio-radio': '🎙️',
+                    // Autres
+                    'jeu-educatif': '🎲',
+                    'autre': '📦'
+                };
+
+                const statusTag = material.status === 'disponible' 
+                    ? '<span class="material-tag tag-disponible">Disponible</span>'
+                    : material.status === 'emprunte'
+                    ? '<span class="material-tag tag-emprunte">Emprunté</span>'
+                    : '<span class="material-tag tag-retard">En retard</span>';
+
+                return `
+                    <div class="material-item ${material.status}">
+                        <div class="material-icon">${categoryIcons[material.category] || '📦'}</div>
+                        <div class="material-info">
+                            <div class="material-name">${material.name}</div>
+                            <div class="material-details">
+                                <span>📍 ${material.site}</span>
+                                <span>🔢 ${material.reference}</span>
+                            </div>
+                            ${material.description ? `<div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 4px;">${material.description}</div>` : ''}
+                        </div>
+                        <div>
+                            ${statusTag}
+                            <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                ${material.status === 'disponible' ? 
+                                    `<button class="btn btn-primary btn-small" onclick="reserveMaterial(${material.id})" style="background: var(--success);">📋 Réserver</button>` 
+                                    : ''}
+                                <button class="btn btn-danger btn-small" onclick="deleteMaterial(${material.id})">🗑️ Supprimer</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function deleteMaterial(id) {
+            if (!isAdmin) {
+                openPasswordModal();
+                return;
+            }
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce matériel ?')) {
+                try {
+                    showLoading(true);
+                    await sbDelete('materials', id);
+                    materials = materials.filter(m => m.id !== id);
+                    renderMaterials();
+                    updateStats();
+                } catch(e) {
+                    alert('❌ Erreur lors de la suppression : ' + e.message);
+                }
+                showLoading(false);
+            }
+        }
+        
+        // Fonction pour réserver un matériel depuis l'inventaire
+        function reserveMaterial(materialId) {
+            // Passer à l'onglet Réservations
+            switchView('reservations');
+            
+            // Attendre que la vue soit chargée
+            setTimeout(() => {
+                // Pré-sélectionner le matériel dans le formulaire
+                const selectElement = document.getElementById('selectedMaterial');
+                if (selectElement) {
+                    selectElement.value = materialId;
+                    
+                    // Faire défiler jusqu'au formulaire
+                    document.getElementById('reservationForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Mettre le focus sur le champ nom de l'emprunteur
+                    document.getElementById('borrowerName').focus();
+                }
+            }, 100);
+        }
+
+        // Filtres et recherche
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                renderMaterials(this.dataset.filter);
+            });
+        });
+
+        document.getElementById('searchMaterial').addEventListener('input', function() {
+            const filter = document.querySelector('.chip.active').dataset.filter;
+            renderMaterials(filter, this.value);
+        });
+
+        document.getElementById('searchHistory').addEventListener('input', function() {
+            renderHistory(this.value);
+        });
+
+        // Réservations
+        function renderMaterialSelect() {
+            const select = document.getElementById('selectedMaterial');
+            const availableMaterials = materials.filter(m => m.status === 'disponible');
+            
+            select.innerHTML = '<option value="">Sélectionner un matériel...</option>' +
+                availableMaterials.map(m => 
+                    `<option value="${m.id}" data-site="${m.site}">${m.name} - ${m.site}</option>`
+                ).join('');
+        }
+
+        document.getElementById('selectedMaterial').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const site = selectedOption.dataset.site || '';
+            document.getElementById('currentSite').value = site;
+        });
+
+        document.getElementById('borrowDate').valueAsDate = new Date();
+
+        document.getElementById('reservationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!hasSignature) {
+                alert('Veuillez signer avant de valider l\'emprunt.');
+                return;
+            }
+
+            const materialId = parseInt(document.getElementById('selectedMaterial').value);
+            const material = materials.find(m => m.id === materialId);
+
+            const reservation = {
+                id: Date.now(),
+                material_id: materialId,
+                material_name: material.name,
+                borrower_name: document.getElementById('borrowerName').value,
+                borrower_contact: document.getElementById('borrowerContact').value,
+                borrow_date: document.getElementById('borrowDate').value,
+                return_date: document.getElementById('returnDate').value,
+                notes: document.getElementById('borrowNotes').value,
+                signature: canvas.toDataURL(),
+                status: 'active',
+                site: material.site
+            };
+
+            try {
+                showLoading(true);
+                await sbInsert('reservations', reservation);
+                await sbUpdate('materials', materialId, { status: 'emprunte' });
+                material.status = 'emprunte';
+                // Adapter les clés pour le front (snake_case → camelCase)
+                reservations.push(toFrontFormat(reservation));
+                
+                this.reset();
+                clearSignature();
+                document.getElementById('borrowDate').valueAsDate = new Date();
+                
+                renderMaterialSelect();
+                renderActiveReservations();
+                updateStats();
+                checkAlerts();
+            } catch(e) {
+                alert('❌ Erreur lors de l\'enregistrement : ' + e.message);
+            }
+            showLoading(false);
+        });
+
+        // Convertir snake_case Supabase → camelCase front
+        function toFrontFormat(r) {
+            return {
+                id: r.id,
+                materialId: r.material_id,
+                materialName: r.material_name,
+                borrowerName: r.borrower_name,
+                borrowerContact: r.borrower_contact,
+                borrowDate: r.borrow_date,
+                returnDate: r.return_date,
+                actualReturnDate: r.actual_return_date,
+                notes: r.notes,
+                signature: r.signature,
+                status: r.status,
+                site: r.site
+            };
+        }
+
+        function renderActiveReservations() {
+            const container = document.getElementById('activeReservationsList');
+            const active = reservations.filter(r => r.status === 'active');
+
+            if (active.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><p>Aucun emprunt en cours</p></div>';
+                return;
+            }
+
+            container.innerHTML = active.map(renderReservationCard).join('');
+        }
+
+        function renderReservationCard(reservation) {
+            const today = new Date().toISOString().split('T')[0];
+            const isLate = reservation.returnDate < today;
+            
+            return `
+                <div class="reservation-item ${isLate ? 'late' : ''}">
+                    <div class="reservation-header">
+                        <div>
+                            <div class="reservation-title">${reservation.materialName}</div>
+                            <div style="color: var(--text-secondary); margin-top: 4px;">
+                                Emprunté par <strong>${reservation.borrowerName}</strong>
+                                ${reservation.borrowerContact ? ` • ${reservation.borrowerContact}` : ''}
+                            </div>
+                        </div>
+                        <span class="material-tag ${isLate ? 'tag-retard' : 'tag-emprunte'}">
+                            ${isLate ? '⚠️ En retard' : '📤 En cours'}
+                        </span>
+                    </div>
+                    <div class="reservation-meta">
+                        <div class="meta-item">
+                            <span>📅</span>
+                            <span>Emprunté: ${formatDate(reservation.borrowDate)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>🔙</span>
+                            <span>Retour: ${formatDate(reservation.returnDate)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>📍</span>
+                            <span>Site: ${reservation.site}</span>
+                        </div>
+                    </div>
+                    ${reservation.notes ? `<div style="margin-top: 12px; padding: 12px; background: white; border-radius: 8px; font-size: 0.9em;">💬 ${reservation.notes}</div>` : ''}
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <button class="btn btn-success btn-small" onclick="returnReservation(${reservation.id})">✅ Retourné</button>
+                        <button class="btn btn-secondary btn-small" onclick="viewSignature(${reservation.id})">✍️ Signature</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteReservation(${reservation.id})">🗑️ Supprimer</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function returnReservation(id) {
+            const reservation = reservations.find(r => r.id === id);
+            if (reservation) {
+                const returnDate = new Date().toISOString().split('T')[0];
+                try {
+                    showLoading(true);
+                    await sbUpdate('reservations', id, { status: 'returned', actual_return_date: returnDate });
+                    await sbUpdate('materials', reservation.materialId, { status: 'disponible' });
+                    reservation.status = 'returned';
+                    reservation.actualReturnDate = returnDate;
+                    const material = materials.find(m => m.id === reservation.materialId);
+                    if (material) material.status = 'disponible';
+                    renderActiveReservations();
+                    updateStats();
+                    checkAlerts();
+                } catch(e) {
+                    alert('❌ Erreur : ' + e.message);
+                }
+                showLoading(false);
+            }
+        }
+
+        async function deleteReservation(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet emprunt ?')) {
+                const reservation = reservations.find(r => r.id === id);
+                try {
+                    showLoading(true);
+                    await sbDelete('reservations', id);
+                    if (reservation && reservation.status === 'active') {
+                        await sbUpdate('materials', reservation.materialId, { status: 'disponible' });
+                        const material = materials.find(m => m.id === reservation.materialId);
+                        if (material) material.status = 'disponible';
+                    }
+                    reservations = reservations.filter(r => r.id !== id);
+                    renderActiveReservations();
+                    renderHistory();
+                    updateStats();
+                    checkAlerts();
+                } catch(e) {
+                    alert('❌ Erreur : ' + e.message);
+                }
+                showLoading(false);
+            }
+        }
+
+        function viewSignature(id) {
+            const reservation = reservations.find(r => r.id === id);
+            if (reservation && reservation.signature) {
+                document.getElementById('signatureModalContent').innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <strong>Emprunteur:</strong> ${reservation.borrowerName}<br>
+                        <strong>Matériel:</strong> ${reservation.materialName}<br>
+                        <strong>Date:</strong> ${formatDate(reservation.borrowDate)}
+                    </div>
+                    <img src="${reservation.signature}" style="width: 100%; border: 2px solid var(--border); border-radius: 12px;">
+                `;
+                document.getElementById('signatureModal').classList.add('show');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('signatureModal').classList.remove('show');
+        }
+
+        function renderHistory(search = '') {
+            const container = document.getElementById('historyList');
+            let history = reservations.filter(r => r.status === 'returned');
+
+            if (search) {
+                history = history.filter(r => 
+                    r.materialName.toLowerCase().includes(search.toLowerCase()) ||
+                    r.borrowerName.toLowerCase().includes(search.toLowerCase())
+                );
+            }
+
+            if (history.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🕐</div><p>Aucun historique</p></div>';
+                return;
+            }
+
+            container.innerHTML = history.reverse().map(reservation => `
+                <div class="reservation-item">
+                    <div class="reservation-header">
+                        <div>
+                            <div class="reservation-title">${reservation.materialName}</div>
+                            <div style="color: var(--text-secondary); margin-top: 4px;">
+                                Emprunté par <strong>${reservation.borrowerName}</strong>
+                            </div>
+                        </div>
+                        <span class="material-tag tag-disponible">✅ Retourné</span>
+                    </div>
+                    <div class="reservation-meta">
+                        <div class="meta-item">
+                            <span>📅</span>
+                            <span>Emprunté: ${formatDate(reservation.borrowDate)}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>🔙</span>
+                            <span>Retourné: ${formatDate(reservation.actualReturnDate)}</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <button class="btn btn-secondary btn-small" onclick="viewSignature(${reservation.id})">✍️ Voir signature</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboardBorrowedList');
+            const active = reservations.filter(r => r.status === 'active');
+
+            if (active.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><p>Aucun emprunt en cours</p></div>';
+                return;
+            }
+
+            container.innerHTML = active.map(renderReservationCard).join('');
+        }
+
+        function updateStats() {
+            const available = materials.filter(m => m.status === 'disponible').length;
+            const borrowed = materials.filter(m => m.status === 'emprunte').length;
+            const today = new Date().toISOString().split('T')[0];
+            const late = reservations.filter(r => r.status === 'active' && r.returnDate < today).length;
+
+            document.getElementById('totalMaterials').textContent = materials.length;
+            document.getElementById('availableMaterials').textContent = available;
+            document.getElementById('borrowedMaterials').textContent = borrowed;
+            document.getElementById('lateMaterials').textContent = late;
+        }
+
+        function checkAlerts() {
+            const alertsDiv = document.getElementById('alerts');
+            const today = new Date().toISOString().split('T')[0];
+            const active = reservations.filter(r => r.status === 'active');
+            const late = active.filter(r => r.returnDate < today);
+            const dueToday = active.filter(r => r.returnDate === today);
+            
+            let alerts = '';
+            
+            if (late.length > 0) {
+                alerts += `
+                    <div class="alert alert-danger">
+                        <span style="font-size: 1.5em;">⚠️</span>
+                        <span><strong>${late.length}</strong> emprunt${late.length > 1 ? 's' : ''} en retard</span>
+                    </div>
+                `;
+            }
+            
+            if (dueToday.length > 0) {
+                alerts += `
+                    <div class="alert alert-warning">
+                        <span style="font-size: 1.5em;">🔔</span>
+                        <span><strong>${dueToday.length}</strong> retour${dueToday.length > 1 ? 's' : ''} prévu${dueToday.length > 1 ? 's' : ''} aujourd'hui</span>
+                    </div>
+                `;
+            }
+            
+            alertsDiv.innerHTML = alerts;
+        }
+
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('fr-FR', options);
+        }
+
+        // Fermer la modal en cliquant à l'extérieur
+        document.getElementById('signatureModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Initialisation — chargement depuis Supabase
+        async function loadData() {
+            showLoading(true);
+            try {
+                const [mats, ress] = await Promise.all([
+                    sbGet('materials'),
+                    sbGet('reservations')
+                ]);
+                materials = mats;
+                // Convertir snake_case → camelCase pour les réservations
+                reservations = ress.map(toFrontFormat);
+                renderDashboard();
+                renderMaterials();
+                updateStats();
+                checkAlerts();
+            } catch(e) {
+                alert('❌ Impossible de se connecter à la base de données.\n\n' + e.message);
+            }
+            showLoading(false);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
